@@ -6,8 +6,9 @@ import java.net.Socket;
 import java.util.LinkedList;
 
 public class TokenServer {
-	static LinkedList<Socket> listaDeNos = new LinkedList<Socket>();
 	static int cont=0;
+	static LinkedList<Socket> listaDeNos = new LinkedList<Socket>();
+
 	public static void main(String [] args) throws IOException {
 		//ServerSocket ouvindo a porta 12345, aceitando novos clientes
 		ServerSocket token;

@@ -1,23 +1,26 @@
 package Questao1.Token;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Scanner;
 
 public class No {
 	
-	Thread escuta;
+	Thread escutaServidorRing;
+	Thread aguardarConexao;
+	Thread escutaVizinho;
 	Socket clientereceived, clientesend, server;
 	ServerSocket socketServer=null;
-	
+	boolean token = false;
+	Integer porta;
+	Integer portaVizinho;
 	public No (){
 		
 		 try {
-
-			  //socketServer = new ServerSocket(5000+TokenServer.proximaPorta());
 			  server = new Socket("localhost", 12345);
-			  System.out.println("500"+TokenServer.getTamanho());
 			  //clientesend = new Socket();
 		 }catch(Exception e) {
 			 e.printStackTrace();
@@ -25,7 +28,7 @@ public class No {
 		 }
 		 
 		 
-		escuta = new Thread(new Runnable() {			
+		escutaServidorRing = new Thread(new Runnable() {			
 		@Override
 			public void run() {
 			
@@ -36,15 +39,41 @@ public class No {
 					
 					Socket s = server;
 							
-					System.out.println("Cliente conectado com servidor");
 					ObjectInputStream is = new ObjectInputStream(s.getInputStream());
 					rcv = is.readObject();
 					if(rcv instanceof ObjetoSocket) {
 						ObjetoSocket obj = (ObjetoSocket) rcv;
-						System.out.println(obj.getHost());
-						System.out.println(obj.getPort());
+						//System.out.println("Conectar com o vizinho");
+						//System.out.println(obj.getHost());
+						//System.out.println(obj.getPort());
+						portaVizinho = obj.getPort();
+						System.out.println("Porta: "+portaVizinho);
+						clientesend = new Socket(obj.getHost(), obj.getPort());
+						System.out.println(clientesend);
 					}
-					System.out.println(rcv);
+					
+					if(rcv instanceof Integer) {						
+						porta = (Integer) rcv;
+						socketServer = new ServerSocket((Integer) rcv);
+						aguardarConexao.start();
+					}
+					
+					if(rcv instanceof Boolean) {
+						token = true;						
+						System.out.println("Token Recebido pelo servidor na porta "+clientereceived.getPort());
+						try {
+							Thread.sleep(10000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						ObjectOutputStream oss=new ObjectOutputStream(clientesend.getOutputStream()); 
+						oss.writeObject(token);
+						System.out.println("Token enviado para vizinho na porta "+clientesend.getPort());
+						token=false;
+					}
+					
+					
 					
 		
 				}
@@ -58,8 +87,92 @@ public class No {
 			}
 		});
 				
-		escuta.start();
+		escutaServidorRing.start();
 		
+		 aguardarConexao = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					while(true){
+						try {
+							clientereceived = socketServer.accept();
+							System.out.println("Cliente recebido "+clientereceived);
+							if(!escutaVizinho.isAlive()) 
+								escutaVizinho.start();
+							
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+		 });
+		
+		
+		escutaVizinho = new Thread(new Runnable() {			
+			@Override
+				public void run() {				
+				try {
+					Object rcv;
+								
+					while(true){
+						
+						Socket s = clientereceived;
+								
+						ObjectInputStream is = new ObjectInputStream(s.getInputStream());
+						rcv = is.readObject();
+						if(rcv instanceof String) {
+							System.out.println(rcv);
+						}			
+						
+						if(rcv instanceof Boolean) {
+							token = true;							
+							System.out.println("Token Recebido pelo servidor na porta "+clientereceived.getPort());
+							try {
+								Thread.sleep(10000);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							ObjectOutputStream oss=new ObjectOutputStream(clientesend.getOutputStream()); 
+							oss.writeObject(token);
+							System.out.println("Token enviado para vizinho na porta "+clientesend.getPort());
+							token=false;
+						}
+						
+					}
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				}
+			});
+		
+		
+		Scanner teclado = new Scanner(System.in);
+		String snd;
+		try {
+			while(true){
+				System.out.println("Digite uma mensagem: ");
+				snd = teclado.nextLine();
+				if (!snd.equalsIgnoreCase("fim"))
+				System.out.println(snd);
+				
+				//Fluxo de saida para enviar uma mensagem string
+				ObjectOutputStream oss=new ObjectOutputStream(clientesend.getOutputStream()); 
+				oss.writeObject(snd);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
+		
+	}
+	
+	public static void clearScreen() {
+		//System. out. print("\033[H\033[2J");
+		//System. out. flush();
 	}
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {	
