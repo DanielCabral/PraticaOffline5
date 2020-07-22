@@ -14,7 +14,8 @@ public class No {
 	Thread escutaVizinho;
 	Socket clientereceived, clientesend, server;
 	ServerSocket socketServer=null;
-	boolean token = false;
+	//boolean token = false;
+	Boolean token = false;
 	Integer porta;
 	Integer portaVizinho;
 	public No (){
@@ -54,13 +55,15 @@ public class No {
 					
 					if(rcv instanceof Integer) {						
 						porta = (Integer) rcv;
+						socketServer = null;
 						socketServer = new ServerSocket((Integer) rcv);
 						aguardarConexao.start();
 					}
 					
+					/*
 					if(rcv instanceof Boolean) {
-						token = true;						
-						System.out.println("Token Recebido pelo servidor na porta "+clientereceived.getPort());
+						token = (Boolean) rcv;						
+						System.out.println("Token Recebido pelo servidor na porta "+porta);
 						try {
 							Thread.sleep(10000);
 						} catch (InterruptedException e) {
@@ -70,8 +73,8 @@ public class No {
 						ObjectOutputStream oss=new ObjectOutputStream(clientesend.getOutputStream()); 
 						oss.writeObject(token);
 						System.out.println("Token enviado para vizinho na porta "+clientesend.getPort());
-						token=false;
-					}
+						token= !token;
+					}*/
 					
 					
 					
@@ -89,16 +92,17 @@ public class No {
 				
 		escutaServidorRing.start();
 		
-		 aguardarConexao = new Thread(new Runnable() {
+		aguardarConexao = new Thread(new Runnable() {
 				@Override
 				public void run() {
 					while(true){
 						try {
-							clientereceived = socketServer.accept();
+							Socket s = socketServer.accept();
+							clientereceived = null;
+							clientereceived = s;
 							System.out.println("Cliente recebido "+clientereceived);
 							if(!escutaVizinho.isAlive()) 
 								escutaVizinho.start();
-							
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -116,16 +120,18 @@ public class No {
 								
 					while(true){
 						
-						Socket s = clientereceived;
+						//Socket s = clientereceived;
 								
-						ObjectInputStream is = new ObjectInputStream(s.getInputStream());
+						ObjectInputStream is = new ObjectInputStream(clientereceived.getInputStream());
 						rcv = is.readObject();
+						System.out.println("rcv ");
 						if(rcv instanceof String) {
 							System.out.println(rcv);
 						}			
 						
+						/*
 						if(rcv instanceof Boolean) {
-							token = true;							
+							token = (Boolean) rcv;							
 							System.out.println("Token Recebido pelo servidor na porta "+clientereceived.getPort());
 							try {
 								Thread.sleep(10000);
@@ -136,8 +142,8 @@ public class No {
 							ObjectOutputStream oss=new ObjectOutputStream(clientesend.getOutputStream()); 
 							oss.writeObject(token);
 							System.out.println("Token enviado para vizinho na porta "+clientesend.getPort());
-							token=false;
-						}
+							token= !token;
+						}*/
 						
 					}
 
@@ -150,7 +156,7 @@ public class No {
 				}
 			});
 		
-		
+
 		Scanner teclado = new Scanner(System.in);
 		String snd;
 		try {
@@ -158,7 +164,7 @@ public class No {
 				System.out.println("Digite uma mensagem: ");
 				snd = teclado.nextLine();
 				if (!snd.equalsIgnoreCase("fim"))
-				System.out.println(snd);
+					System.out.println(snd);
 				
 				//Fluxo de saida para enviar uma mensagem string
 				ObjectOutputStream oss=new ObjectOutputStream(clientesend.getOutputStream()); 
@@ -166,14 +172,10 @@ public class No {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}	
+		}
 		
 	}
 	
-	public static void clearScreen() {
-		//System. out. print("\033[H\033[2J");
-		//System. out. flush();
-	}
 	
 	public static void main(String[] args) throws UnknownHostException, IOException {	
 		new No();

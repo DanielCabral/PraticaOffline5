@@ -15,6 +15,8 @@ public Servidor(Socket cliente) throws IOException{
 	System.out.println("No servidor: "+TokenServer.listaDeNos.size());
 	if(TokenServer.listaDeNos.size() > 1) {
 		enviarParaAnteriorEnderecoEPorta();		
+	}else {
+		iniciarServidorZero();
 	}
 }
 
@@ -26,6 +28,12 @@ public void enviarParaAnteriorEnderecoEPorta() throws IOException {
 	Socket NoAnterior = TokenServer.listaDeNos.get(tamanho-2);
 	Socket NoAtual = TokenServer.listaDeNos.get(tamanho-1);
 	
+	//Fluxo de envio para o NO n
+	ObjectOutputStream oss=new ObjectOutputStream(NoAtual.getOutputStream());
+	//Enviar para o NO n, a porta que ele deve criar o servidor 
+	oss.writeObject(5000+((Integer) tamanho));
+	
+	
 	//Pegar Dados do NO n
 	InetAddress addr = NoAtual.getInetAddress();
 	String host = addr.getHostAddress();
@@ -33,40 +41,35 @@ public void enviarParaAnteriorEnderecoEPorta() throws IOException {
 	//Criar um object socket com endereço e porta do NO n
 	//Esse endereco e porta, serao enviados pra o NO n-1
 	ObjetoSocket dadosDeEnderecoEPorta = new ObjetoSocket(host , 5000+tamanho);
-	
-	//Fluxo de envio para o NO n
-	ObjectOutputStream oss=new ObjectOutputStream(NoAtual.getOutputStream());
-	//Enviar para o NO n, a porta que ele deve criar o servidor 
-	oss.writeObject(5000+((Integer) tamanho));
-	
+		
 	//Fluxo de envio para o NO n-1
 	oss=new ObjectOutputStream(NoAnterior.getOutputStream());
  	//Enviar para NO n-1, os dados com endereco e porta do servidor que o no seguinte criou
 	oss.writeObject(dadosDeEnderecoEPorta);
 	
-	if(tamanho==2) {
-		//Quando o NO 1 conecta
-		//Necessario enviar para o NO 0 a porta que ele deve criar um servidor
-		//O ultimo no sempre se conecta no servidor do NO 0
-		//Fluxo de envio para o NO 0
-		oss=new ObjectOutputStream(NoZero.getOutputStream());
-		//Enviar para o NO 0 a porta que ele deve criar o servidor 
-		oss.writeObject(5001);
-		Boolean token = true;
-		ObjectOutputStream oss2=new ObjectOutputStream(NoZero.getOutputStream());
-		oss2.writeObject(token);		
-	}
 	
 	//Pegar Dados do NO 0
 	addr = NoZero.getInetAddress();
 	host = addr.getHostAddress();
-
+	
 	dadosDeEnderecoEPorta = new ObjetoSocket(host , 5001);
 	System.out.println();
 	//Fluxo de envio para o no n
 	oss=new ObjectOutputStream(NoAtual.getOutputStream());
 	//Enviar para NO n, os dados com endereco e porta do servidor do NO 0
 	oss.writeObject(dadosDeEnderecoEPorta);
+	
+	if(tamanho==2) {
+		/*Boolean token = true;
+		ObjectOutputStream oss2=new ObjectOutputStream(NoZero.getOutputStream());
+		oss2.writeObject(token);*/		
+	}
+}
+
+public void iniciarServidorZero() throws IOException {
+	ObjectOutputStream oss=new ObjectOutputStream(TokenServer.listaDeNos.get(0).getOutputStream());
+	//Enviar para o NO 0 a porta que ele deve criar o servidor 
+	oss.writeObject(5001);
 }
 
 public Socket getCliente() {
