@@ -41,12 +41,12 @@ public void enviarParaAnteriorEnderecoEPorta() throws IOException {
 	//Criar um object socket com endereço e porta do NO n
 	//Esse endereco e porta, serao enviados pra o NO n-1
 	ObjetoSocket dadosDeEnderecoEPorta = new ObjetoSocket(host , 5000+tamanho);
-		
+	if(tamanho!=3) {
 	//Fluxo de envio para o NO n-1
 	oss=new ObjectOutputStream(NoAnterior.getOutputStream());
  	//Enviar para NO n-1, os dados com endereco e porta do servidor que o no seguinte criou
 	oss.writeObject(dadosDeEnderecoEPorta);
-	
+	}
 	
 	//Pegar Dados do NO 0
 	addr = NoZero.getInetAddress();

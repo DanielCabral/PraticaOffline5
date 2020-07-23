@@ -1,4 +1,4 @@
-package Questao1.Token;
+package TerceiraTentativa;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -42,14 +42,11 @@ public class No {
 							
 					ObjectInputStream is = new ObjectInputStream(s.getInputStream());
 					rcv = is.readObject();
+					System.out.println(rcv);
 					if(rcv instanceof ObjetoSocket) {
 						ObjetoSocket obj = (ObjetoSocket) rcv;
-						//System.out.println("Conectar com o vizinho");
-						//System.out.println(obj.getHost());
-						//System.out.println(obj.getPort());
 						portaVizinho = obj.getPort();
 						System.out.println("Porta: "+portaVizinho);
-						clientesend=null;
 						clientesend = new Socket(obj.getHost(), obj.getPort());
 						System.out.println(clientesend);
 					}
