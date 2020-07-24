@@ -7,6 +7,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 
+import javafx.fxml.FXML;
+import models.Recurso;
+
 public class No {
 	
 	Thread escutaServidorRing;
@@ -16,9 +19,9 @@ public class No {
 	ServerSocket socketServer=null;
 	//boolean token = false;
 	Boolean token = false;
-	Integer porta;
-	Integer portaVizinho;
-	public No (){
+	String status = "";
+	String conteudoDeRecurso = "";
+	public No () throws IOException, InterruptedException{
 		
 		 try {
 			  server = new Socket("localhost", 12345);
@@ -42,18 +45,29 @@ public class No {
 							
 					ObjectInputStream is = new ObjectInputStream(s.getInputStream());
 					rcv = is.readObject();
-					System.out.println(rcv);
+					
+					if(rcv instanceof String) {
+						Thread.sleep(2000);
+						System.out.println("Recurso gravado");
+						Thread.sleep(2000);
+						liberarRecurso();
+					}
+					
+					if(rcv instanceof Recurso) {
+						Thread.sleep(2000);
+						System.out.println("Recurso recebido");
+						System.out.println("Conteudo do recurso: "+((Recurso) rcv).getConteudo());
+						Thread.sleep(2000);
+						liberarRecurso();
+					}
+					
 					if(rcv instanceof ObjetoSocket) {
 						ObjetoSocket obj = (ObjetoSocket) rcv;
-						System.out.println(obj);
-						portaVizinho = obj.getPort();
-						System.out.println("Porta: "+portaVizinho);
 						clientesend = new Socket(obj.getHost(), obj.getPort());
 						System.out.println(clientesend);
 					}
 					
 					if(rcv instanceof Integer) {						
-						porta = (Integer) rcv;
 						socketServer = null;
 						socketServer = new ServerSocket((Integer) rcv);
 						aguardarConexao.start();
@@ -62,17 +76,18 @@ public class No {
 					//Inicializar token
 					if(rcv instanceof Boolean) {
 						token = (Boolean) rcv;						
-						System.out.println("Token Recebido pelo servidor na porta "+porta);
+						System.out.println("Token Recebido pelo servidor");
 						try {
-							Thread.sleep(10000);
+							Thread.sleep(5000);
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						ObjectOutputStream oss=new ObjectOutputStream(clientesend.getOutputStream()); 
-						oss.writeObject(token);
-						System.out.println("Token enviado para vizinho na porta "+clientesend.getPort());
-						token= !token;
+						if(status.equals("acessarRecurso")) {
+							acessarRecurso();
+						}else {
+							enviarToken();
+						}	
 					}
 					
 					
@@ -83,6 +98,9 @@ public class No {
 			} catch (IOException e) {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -119,11 +137,9 @@ public class No {
 								
 					while(true){
 						
-						//Socket s = clientereceived;
 								
 						ObjectInputStream is = new ObjectInputStream(clientereceived.getInputStream());
 						rcv = is.readObject();
-						System.out.println("rcv ");
 						if(rcv instanceof String) {
 							System.out.println(rcv);
 						}			
@@ -131,17 +147,19 @@ public class No {
 						
 						if(rcv instanceof Boolean) {
 							token = (Boolean) rcv;							
-							System.out.println("Token Recebido pelo servidor na porta "+clientereceived.getPort());
+							System.out.println("Token Recebido...");
 							try {
-								Thread.sleep(10000);
+								Thread.sleep(5000);
 							} catch (InterruptedException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
-							ObjectOutputStream oss=new ObjectOutputStream(clientesend.getOutputStream()); 
-							oss.writeObject(token);
-							System.out.println("Token enviado para vizinho na porta "+clientesend.getPort());
-							token= !token;
+							if(status.equals("acessarRecurso")) {
+								acessarRecurso();
+							}else {
+								enviarToken();
+							}	
+							//enviarToken();
 						}
 						
 					}
@@ -151,6 +169,9 @@ public class No {
 				} catch (ClassNotFoundException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 				}
 			});
@@ -158,6 +179,41 @@ public class No {
 
 		Scanner teclado = new Scanner(System.in);
 		String snd;
+
+		int escolha=-1;
+		while(escolha != 0) {
+			System.out.println("------Opções de acesso de recurso------");
+			System.out.println("0- Sair");
+			System.out.println("1- Receber Recurso");
+			System.out.println("2- Acessar recurso");
+			System.out.print("Escolha uma opção: ");
+			escolha = teclado.nextInt();
+		
+		//Se processo bloqueado, não entra novamente
+		if(!status.equals("acessarRecurso")) {
+			switch(escolha) {
+				case 0: 
+					server.close();
+					System.exit(0);
+					break;
+					
+				case 1: 
+					entrar();
+					break;
+					
+				case 2: 
+					Scanner sc =new Scanner(System.in);
+					System.out.print("Digite o conteudo a gravar no arquivo: ");
+					conteudoDeRecurso = sc.nextLine();
+					
+					entrar();
+					break;
+					default: 
+						System.out.print("Opção invalida: ");
+						break;
+			}
+		}
+		}
 		try {
 			while(true){
 				System.out.println("Digite uma mensagem: ");
@@ -178,8 +234,39 @@ public class No {
 		
 	}
 	
+	public void enviarToken() throws IOException {
+		ObjectOutputStream oss=new ObjectOutputStream(clientesend.getOutputStream()); 
+		oss.writeObject(token);
+		System.out.println("Token enviado para vizinho");
+		token= !token;
+	}
 	
-	public static void main(String[] args) throws UnknownHostException, IOException {	
+	public void liberarRecurso() throws IOException {
+		status="";
+		System.out.println("Recurso liberado");
+		enviarToken();
+	}
+	
+	public void acessarRecurso() throws IOException, InterruptedException{
+		System.out.println("Acessando recurso");
+		status = "acessarRecurso";
+		Thread.sleep(2000);
+		ObjectOutputStream oss=new ObjectOutputStream(server.getOutputStream()); 
+		if(conteudoDeRecurso.equals("")) {
+			oss.writeObject("Receber recurso");
+		}else {
+			oss.writeObject(new Recurso(conteudoDeRecurso));
+		}
+	}
+	
+	@FXML
+	public void entrar() throws IOException {
+		status = "acessarRecurso";
+		System.out.println("Aguardando liberacao de recurso");
+	}
+	
+	
+	public static void main(String[] args) throws UnknownHostException, IOException, InterruptedException {	
 		new No();
 	}
 }
