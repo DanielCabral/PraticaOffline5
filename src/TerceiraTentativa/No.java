@@ -45,6 +45,7 @@ public class No {
 					System.out.println(rcv);
 					if(rcv instanceof ObjetoSocket) {
 						ObjetoSocket obj = (ObjetoSocket) rcv;
+						System.out.println(obj);
 						portaVizinho = obj.getPort();
 						System.out.println("Porta: "+portaVizinho);
 						clientesend = new Socket(obj.getHost(), obj.getPort());
@@ -58,7 +59,7 @@ public class No {
 						aguardarConexao.start();
 					}
 					
-					/*
+					//Inicializar token
 					if(rcv instanceof Boolean) {
 						token = (Boolean) rcv;						
 						System.out.println("Token Recebido pelo servidor na porta "+porta);
@@ -72,7 +73,7 @@ public class No {
 						oss.writeObject(token);
 						System.out.println("Token enviado para vizinho na porta "+clientesend.getPort());
 						token= !token;
-					}*/
+					}
 					
 					
 					
@@ -127,7 +128,7 @@ public class No {
 							System.out.println(rcv);
 						}			
 						
-						/*
+						
 						if(rcv instanceof Boolean) {
 							token = (Boolean) rcv;							
 							System.out.println("Token Recebido pelo servidor na porta "+clientereceived.getPort());
@@ -141,7 +142,7 @@ public class No {
 							oss.writeObject(token);
 							System.out.println("Token enviado para vizinho na porta "+clientesend.getPort());
 							token= !token;
-						}*/
+						}
 						
 					}
 

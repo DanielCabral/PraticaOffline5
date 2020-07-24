@@ -7,12 +7,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
 
-import Questao1.Token.ObjetoSocket;
+import models.Recurso;
+
 
 public class TokenServer {
 	static int cont=0;
 	static LinkedList<Socket> listaDeNos = new LinkedList<Socket>();
-
+	static Recurso recurso = new Recurso();
 	public static void main(String [] args) throws IOException {
 		//ServerSocket ouvindo a porta 12345, aceitando novos clientes
 		ServerSocket token;
@@ -29,6 +30,7 @@ public class TokenServer {
 		    t.start();
 		}
 		iniciarTopologiaAnel();
+		criarToken();
 		Thread t2 = new Thread(new Runnable() {
 			
 			@Override
@@ -70,6 +72,12 @@ public class TokenServer {
 				oss.writeObject(dadosDeEnderecoEPorta);
 			}
 		}
+	}
+	
+	public static void criarToken() throws IOException {
+		Boolean token = true;
+		ObjectOutputStream oss=new ObjectOutputStream(listaDeNos.get(0).getOutputStream());
+		oss.writeObject(token);
 	}
 	
 	public static int getTamanho() {

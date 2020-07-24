@@ -1,16 +1,16 @@
 package TerceiraTentativa;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
 import java.net.Socket;
 
-import Questao1.Token.ObjetoSocket;
 
 
 
 public class Servidor implements Runnable{
 public Socket cliente;
+Thread escutaNo;
 int index;
 public Servidor(Socket cliente, int index) throws IOException{
 	this.index = index;
@@ -31,7 +31,31 @@ public Socket getCliente() {
 
 
  public void run(){
-	
+	 escutaNo = new Thread(new Runnable() {			
+			@Override
+			public void run() {				
+				try {
+					Object rcv;
+					while(true){
+						
+							ObjectInputStream is = new ObjectInputStream(cliente.getInputStream());
+							rcv = is.readObject();
+							
+							
+							
+							System.out.println(rcv);
+							ObjectOutputStream oss=new ObjectOutputStream(cliente.getOutputStream()); 
+							oss.writeObject(TokenServer.recurso);
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		escutaNo.start();
  }
  
 }
